@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quy Bảo Hiểm CS - Hệ Thống Quản Lý</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
+        :root {
+            --primary: #3b82f6; --primary-dark: #2563eb; --primary-light: #dbeafe;
+            --bg-main: #f3f4f6; --bg-card: #ffffff; --text-main: #111827;
+            --text-sub: #6b7280; --border: #e5e7eb; --danger: #ef4444;
+            --danger-dark: #dc2626; --success: #10b981; --warning: #f59e0b;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--bg-main); color: var(--text-main); overflow-x: hidden; line-height: 1.5; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-sub); }
+
+        /* AUTH SCREEN */
+        #authScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+        .auth-box { background: var(--bg-card); padding: 40px 30px; border-radius: 20px; width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); animation: fadeInUp 0.6s ease-out; }
+        .auth-box h2 { text-align: center; color: var(--primary); margin-bottom: 30px; font-size: 24px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; color: var(--text-main); }
+        .form-control { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 15px; font-family: 'Roboto', sans-serif; transition: var(--transition); background: #f9fafb; }
+        .form-control:focus { outline: none; border-color: var(--primary); background: var(--bg-card); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: 700; font-size: 16px; cursor: pointer; transition: var(--transition); font-family: 'Roboto', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .btn-primary:active { transform: translateY(0); }
+        .switch-auth { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text-sub); }
+        .switch-auth a { color: var(--primary); text-decoration: none; font-weight: 700; cursor: pointer; }
+
+        /* MAIN APP */
+        #appScreen { display: none; padding-bottom: 80px; min-height: 100vh; }
+        .app-header { background: var(--bg-card); padding: 15px 20px; box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        .app-header h3 { font-size: 18px; color: var(--primary); font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .header-actions { display: flex; align-items: center; }
+        .header-actions .action-btn { background: none; border: none; font-size: 20px; margin-left: 15px; color: var(--text-main); cursor: pointer; transition: var(--transition); position: relative; }
+        .header-actions .action-btn:hover { color: var(--primary); }
+        .view { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
+        .view.active { display: block; }
+        .hidden { display: none !important; }
+
+        /* HOME VIEW */
+        .info-banner { background: linear-gradient(135deg, var(--primary) 0%, #818cf8 100%); color: white; padding: 25px; border-radius: 16px; margin-bottom: 25px; box-shadow: var(--shadow-md); }
+        .info-banner h4 { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .info-banner ul { padding-left: 20px; font-size: 14px; opacity: 0.9; }
+        .info-banner li { margin-bottom: 5px; }
+
+        /* MARKET VIEW */
+        .create-post-box { background: var(--bg-card); border-radius: 16px; padding: 20px; margin-bottom: 25px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+        .create-post-box textarea { width: 100%; border: none; resize: none; font-family: 'Roboto', sans-serif; font-size: 15px; margin-bottom: 15px; outline: none; min-height: 60px; }
+        .post-actions-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 15px; }
+        .post-action-icon { display: flex; align-items: center; gap: 8px; color: var(--text-sub); font-size: 14px; font-weight: 500; cursor: pointer; padding: 8px 12px; border-radius: 8px; transition: var(--transition); border: none; background: none; }
+        .post-action-icon:hover { background: var(--bg-main); }
+        .post-action-icon.img-btn { color: var(--success); }
+        .post-action-icon.price-btn { color: var(--warning); }
+        .post-card { background: var(--bg-card); border-radius: 16px; margin-bottom: 20px; box-shadow: var(--shadow-sm); overflow: hidden; border: 1px solid var(--border); }
+        .post-header { display: flex; align-items: center; padding: 15px; gap: 12px; }
+        .post-avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--border); overflow: hidden; cursor: pointer; flex-shrink: 0; }
+        .post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .post-user-info { flex-grow: 1; cursor: pointer; }
+        .post-username { font-weight: 700; font-size: 15px; color: var(--text-main); }
+        .post-username:hover { color: var(--primary); }
+        .post-time { font-size: 12px; color: var(--text-sub); }
+        .post-content { padding: 0 15px 15px; }
+        .post-title { font-size: 16px; font-weight: 700; margin-bottom: 5px; }
+        .post-desc { font-size: 14px; color: var(--text-main); margin-bottom: 10px; white-space: pre-wrap; }
+        .post-price-tag { display: inline-block; background: #fef2f2; color: var(--danger); font-weight: 800; padding: 5px 12px; border-radius: 6px; font-size: 15px; }
+        .post-image-container { width: 100%; max-height: 400px; overflow: hidden; background: #000; cursor: pointer; position: relative; }
+        .post-image-container img { width: 100%; height: auto; max-height: 400px; object-fit: contain; display: block; margin: 0 auto; }
+        .post-stats-row { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-sub); font-weight: 500; }
+        .post-interactions { display: flex; padding: 10px 15px; gap: 5px; }
+        .interaction-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text-sub); cursor: pointer; transition: var(--transition); border: none; background: none; }
+        .interaction-btn:hover { background: var(--bg-main); }
+        .interaction-btn.like-btn.active { color: var(--primary); background: var(--primary-light); }
+        .interaction-btn.like-btn.active i { animation: likeAnim 0.4s ease; }
+        
+        /* COMMENTS */
+        .comment-section { background: var(--bg-main); padding: 15px; border-top: 1px solid var(--border); }
+        .view-all-comments { font-size: 13px; font-weight: 600; color: var(--text-sub); cursor: pointer; margin-bottom: 15px; }
+        .comment-item { display: flex; gap: 10px; margin-bottom: 15px; }
+        .comment-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--border); flex-shrink: 0; overflow: hidden; }
+        .comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .comment-body { background: var(--bg-card); padding: 10px 14px; border-radius: 18px; position: relative; flex-grow: 1; box-shadow: var(--shadow-sm); }
+        .comment-author { font-weight: 700; font-size: 13px; margin-right: 5px; }
+        .comment-text { font-size: 14px; display: inline; }
+        .comment-meta { display: flex; gap: 15px; margin-top: 4px; font-size: 11px; font-weight: 600; color: var(--text-sub); }
+        .comment-action-small { cursor: pointer; border: none; background: none; font-size: 11px; font-weight: 600; color: var(--text-sub); padding: 0; margin: 0; }
+        .comment-action-small:hover { color: var(--text-main); }
+        .comment-input-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+        .comment-input-row img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .comment-input-row input { flex-grow: 1; border: none; background: var(--bg-card); padding: 10px 15px; border-radius: 20px; font-size: 14px; outline: none; font-family: 'Roboto', sans-serif; }
+        .comment-send-btn { background: var(--primary); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .comment-send-btn:hover { background: var(--primary-dark); }
+
+        /* PROFILE VIEW */
+        #view-profile { padding: 0; padding-bottom: 80px; background: var(--bg-main); }
+        .profile-cover { height: 180px; background: linear-gradient(135deg, #1e3a8a 0%, #4f46e5 50%, #7c3aed 100%); position: relative; }
+        .profile-back-btn { position: absolute; top: 15px; left: 15px; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(5px); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .profile-back-btn:hover { background: rgba(0, 0, 0, 0.5); }
+        .profile-settings-btn { position: absolute; top: 15px; right: 15px; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(5px); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 16px; display: none; align-items: center; justify-content: center; }
+        .profile-main-card { background: var(--bg-card); margin: -60px 15px 0; border-radius: 16px; padding: 20px; text-align: center; position: relative; z-index: 10; box-shadow: var(--shadow-md); }
+        .profile-avatar-lg { width: 120px; height: 120px; border-radius: 50%; border: 5px solid var(--bg-card); margin: -80px auto 15px; overflow: hidden; background: var(--bg-main); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); position: relative; }
+        .profile-avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-name { font-size: 22px; font-weight: 800; margin-bottom: 5px; }
+        .profile-bio { font-size: 14px; color: var(--text-sub); margin-bottom: 20px; min-height: 20px; }
+        .profile-action-btns { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
+        .btn-follow { background: var(--primary); color: white; border: none; padding: 10px 30px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); font-size: 15px; }
+        .btn-follow:hover { transform: scale(1.05); background: var(--primary-dark); }
+        .btn-follow.following { background: var(--bg-main); color: var(--text-main); box-shadow: none; border: 1px solid var(--border); }
+        .btn-follow.following:hover { background: #fef2f2; color: var(--danger); border-color: var(--danger); }
+        .btn-msg { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 15px; }
+        .profile-stats-row { display: flex; justify-content: space-around; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 15px 0; margin: 0 -20px; }
+        .stat-item { text-align: center; cursor: pointer; flex: 1; transition: var(--transition); }
+        .stat-item:hover { background: var(--bg-main); }
+        .stat-item p { margin: 0; }
+        .stat-num { font-weight: 800; font-size: 18px; color: var(--text-main); }
+        .stat-label { font-size: 12px; color: var(--text-sub); font-weight: 500; }
+        .profile-tabs { display: flex; border-bottom: 1px solid var(--border); margin-top: 20px; }
+        .p-tab { flex: 1; text-align: center; padding: 15px 0; font-weight: 700; color: var(--text-sub); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; transition: var(--transition); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .p-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .p-tab-content { display: none; padding-top: 15px; }
+        .p-tab-content.active { display: block; }
+
+        /* ADMIN LIST */
+        .admin-sync-box { background: #fff3cd; border: 1px solid #ffc107; border-radius: 12px; padding: 15px; margin-bottom: 20px; text-align: center; }
+        .admin-sync-btn { background: var(--warning); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; margin-top: 10px; }
+        .admin-item { background: var(--bg-card); padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; align-items: center; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .admin-rank { font-weight: 900; color: var(--text-sub); width: 30px; text-align: center; font-size: 16px; }
+        .admin-avatar { width: 55px; height: 55px; border-radius: 50%; background: var(--border); margin-right: 15px; overflow: hidden; border: 2px solid var(--primary); flex-shrink: 0; }
+        .admin-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .admin-info { flex-grow: 1; }
+        .admin-name { font-weight: 700; font-size: 16px; }
+        .admin-amount { font-size: 14px; color: var(--danger); font-weight: 600; margin-bottom: 10px; }
+        .admin-links { display: flex; gap: 8px; flex-wrap: wrap; }
+        .admin-link-btn { padding: 6px 12px; border-radius: 6px; color: white; text-decoration: none; font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; }
+
+        /* BOTTOM NAV */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0 12px; z-index: 100; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05); }
+        .nav-item { text-align: center; cursor: pointer; color: var(--text-sub); transition: var(--transition); flex: 1; padding: 5px 0; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 3px; }
+        .nav-item span { font-size: 11px; font-weight: 600; }
+        .hide-nav { display: none !important; }
+
+        /* MODALS & EXTRAS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 9998; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .image-modal-content { max-width: 100%; max-height: 90vh; object-fit: contain; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); animation: zoomIn 0.3s ease; }
+        .create-form-details { background: var(--bg-card); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); display: none; animation: slideDown 0.3s ease; }
+        .create-form-details.active { display: block; }
+        .upload-preview-zone { width: 100%; height: 150px; border: 2px dashed var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; background: #f9fafb; position: relative; overflow: hidden; }
+        .upload-preview-zone img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+        .toast-container { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        .toast-msg { background: #1f2937; color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); animation: fadeInUp 0.4s ease; white-space: nowrap; }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-sub); }
+        .empty-state i { font-size: 50px; margin-bottom: 15px; color: var(--border); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes likeAnim { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="authScreen">
+        <div class="auth-box">
+            <form id="loginForm">
+                <h2><i class="fas fa-shield-halved"></i> QUY BẢO HIỂM CS</h2>
+                <div class="form-group"><label>Tên đăng nhập</label><input type="text" class="form-control" id="loginUser" required autocomplete="username"></div>
+                <div class="form-group"><label>Mật khẩu</label><input type="password" class="form-control" id="loginPass" required autocomplete="current-password"></div>
+                <button type="submit" class="btn btn-primary">Đăng Nhập</button>
+                <div class="switch-auth">Chưa có tài khoản? <a onclick="toggleAuth()">Đăng ký ngay</a></div>
+            </form>
+            <form id="registerForm" class="hidden">
+                <h2>Đăng Ký Tài Khoản</h2>
+                <div class="form-group"><label>Tên đăng nhập</label><input type="text" class="form-control" id="regUser" required autocomplete="username"></div>
+                <div class="form-group"><label>Mật khẩu</label><input type="password" class="form-control" id="regPass" required autocomplete="new-password"></div>
+                <button type="submit" class="btn btn-primary">Tạo Tài Khoản</button>
+                <div class="switch-auth">Đã có tài khoản? <a onclick="toggleAuth()">Đăng nhập</a></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="appScreen">
+        <header class="app-header" id="mainHeader">
+            <h3 id="headerTitle"><i class="fas fa-shield-halved"></i> QUY BAO HIỂM CS</h3>
+            <div class="header-actions" id="headerActions">
+                <button class="action-btn" onclick="showToast('Không có thông báo mới')"><i class="far fa-bell"></i></button>
+                <button class="action-btn" title="Đăng xuất" onclick="logout()"><i class="fas fa-right-from-bracket"></i></button>
+            </div>
+        </header>
+
+        <div id="view-home" class="view active">
+            <div class="info-banner">
+                <h4><i class="fas fa-server"></i> Thông Tin Hệ Thống</h4>
+                <p style="margin-bottom: 10px; opacity: 0.9;">Chào mừng bạn đến với Hệ Thống Bảo Hiểm Chống Scam uy tín nhất.</p>
+                <ul>
+                    <li>Để trở thành Admin, bạn <b>BẮT BUỘC</b> phải gửi File lên Máy Chủ trực tiếp.</li>
+                    <li>Người dùng trên Web <b>KHÔNG THỂ</b> tự ý lên Admin bằng bất kỳ cách nào.</li>
+                    <li>Dữ liệu Admin được tự động đồng bộ từ thư mục <code>data</code> trên Server.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="view-market" class="view">
+            <div class="create-post-box">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <div id="marketCurrentUserAvatar" style="width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; overflow: hidden; flex-shrink: 0;">
+                        <i class="fas fa-user" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #9ca3af;"></i>
+                    </div>
+                    <textarea id="postDescInput" placeholder="Bạn đang bán acc gì? Mô tả chi tiết..." rows="2"></textarea>
+                </div>
+                <div class="create-form-details" id="createDetailsForm">
+                    <div class="form-group"><label>Tiêu đề</label><input type="text" class="form-control" id="postTitleInput" placeholder="VD: Bán Acc Liên Quân"></div>
+                    <div class="form-group"><label>Giá bán</label><input type="text" class="form-control" id="postPriceInput" placeholder="VD: 500,000đ"></div>
+                    <div class="upload-preview-zone" id="uploadPreviewZone">
+                        <div id="uploadPlaceholder" style="text-align: center; color: var(--text-sub);"><i class="fas fa-image fa-2x" style="margin-bottom: 10px; display: block; color: var(--border);"></i><span>Ảnh xem trước</span></div>
+                        <img id="previewImg" src="" alt="" style="display: none;">
+                    </div>
+                    <input type="file" id="postImageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+                    <button class="btn btn-primary" onclick="publishPost()"><i class="fas fa-paper-plane"></i> Đăng Bài</button>
+                </div>
+                <div class="post-actions-row">
+                    <div style="display: flex; gap: 5px;">
+                        <button class="post-action-icon img-btn" onclick="document.getElementById('postImageInput').click()"><i class="fas fa-image"></i> Ảnh</button>
+                        <button class="post-action-icon price-btn" onclick="toggleCreateForm()"><i class="fas fa-tag"></i> Giá/Tiêu đề</button>
+                    </div>
+                </div>
+            </div>
+            <div id="marketFeedList"></div>
+        </div>
+
+        <div id="view-profile" class="view">
+            <div class="profile-cover">
+                <button class="profile-back-btn" onclick="goBackFromProfile()"><i class="fas fa-arrow-left"></i></button>
+                <button class="profile-settings-btn" id="profileSettingsBtn" onclick="openEditProfile()"><i class="fas fa-cog"></i></button>
+            </div>
+            <div class="profile-main-card">
+                <div class="profile-avatar-lg" id="profileAvatarLg"><i class="fas fa-user" style="font-size: 40px; color: #ccc; margin-top: 40px;"></i></div>
+                <div class="profile-name" id="profileNameLg">Username</div>
+                <div class="profile-bio" id="profileBioLg">Chưa có tiểu sử</div>
+                <div class="profile-action-btns">
+                    <button class="btn-follow" id="followBtn" onclick="toggleFollowUser()">Theo dõi</button>
+                    <button class="btn-msg" style="display: none;" id="msgBtn"><i class="far fa-comment-dots"></i></button>
+                </div>
+                <div class="profile-stats-row">
+                    <div class="stat-item"><p class="stat-num" id="pPostCount">0</p><p class="stat-label">Bài viết</p></div>
+                    <div class="stat-item" onclick="switchProfileTab('followers')"><p class="stat-num" id="pFollowerCount">0</p><p class="stat-label">Người theo dõi</p></div>
+                    <div class="stat-item" onclick="switchProfileTab('following')"><p class="stat-num" id="pFollowingCount">0</p><p class="stat-label">Đang theo dõi</p></div>
+                </div>
+                <div class="profile-tabs">
+                    <div class="p-tab active" onclick="switchProfileTab('posts')">Bài viết</div>
+                    <div class="p-tab" onclick="switchProfileTab('liked')">Đã thích</div>
+                </div>
+                <div class="p-tab-content active" id="tab-posts"></div>
+                <div class="p-tab-content" id="tab-liked"></div>
+                <div class="p-tab-content" id="tab-followers"></div>
+                <div class="p-tab-content" id="tab-following"></div>
+            </div>
+        </div>
+
+        <div id="view-admins" class="view">
+            <!-- KHU VỰC CHỈ DÀNH CHO NGƯỜI QUẢN LÝ MÁY CHỦ -->
+            <div class="admin-sync-box">
+                <i class="fas fa-folder-open" style="font-size: 24px; color: var(--warning); margin-bottom: 10px;"></i>
+                <h6 style="margin-bottom: 5px;">Quản Trị Viên: Đồng Bộ Thư Mục Data</h6>
+                <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 10px;">Hệ thống sẽ tự động quét thư mục <code>data</code>, ghép file .txt và .jpeg/.png trùng tên để tạo Admin.</p>
+                <button class="admin-sync-btn" onclick="handleAdminSyncClick()"><i class="fas fa-sync-alt"></i> Chọn Thư Mục 'data' Để Đồng Bộ</button>
+                <div id="syncStatus" style="font-size: 12px; margin-top: 8px; font-weight: 600; color: var(--success);"></div>
+            </div>
+
+            <div style="margin-bottom: 20px; position: relative;">
+                <input type="text" class="form-control" placeholder="Tìm kiếm admin..." id="searchAdmin" oninput="filterAdmins()" style="padding-left: 40px;">
+                <i class="fas fa-search" style="position: absolute; left: 15px; top: 16px; color: var(--text-sub);"></i>
+            </div>
+            <div id="adminListContainer">
+                <div class="empty-state">
+                    <i class="fas fa-users-slash"></i>
+                    <h5>Danh sách trống</h5>
+                    <p>Chưa có dữ liệu Admin từ máy chủ.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-bot" class="view">
+            <div class="empty-state" style="margin-top: 60px;">
+                <i class="fas fa-robot"></i>
+                <h4>Hệ Thống Bot Check</h4>
+                <p>Tính năng đang được bảo trì.</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav" id="bottomNav">
+            <div class="nav-item active" onclick="switchView('home', this)"><i class="fas fa-home"></i><span>Trang Chủ</span></div>
+            <div class="nav-item" onclick="switchView('market', this)"><i class="fas fa-store"></i><span>Mua Bán</span></div>
+            <div class="nav-item" onclick="switchView('admins', this)"><i class="fas fa-users-gear"></i><span>DS Admin</span></div>
+            <div class="nav-item" onclick="switchView('bot', this)"><i class="fas fa-robot"></i><span>BOT Check</span></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="imageModal" onclick="closeImageModal()">
+        <img src="" alt="Image Preview" class="image-modal-content" id="modalImage">
+    </div>
+    <div class="toast-container" id="toastContainer"></div>
+
+<script>
+    let currentUser = null;
+    let viewingUser = null;
+    let tempPostImage = null;
+    let isCreateFormOpen = false;
+
+    // ---------------------------------------------------------
+    // AUTH LOGIC
+    // ---------------------------------------------------------
+    function toggleAuth() { document.getElementById('loginForm').classList.toggle('hidden'); document.getElementById('registerForm').classList.toggle('hidden'); }
+    
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const u = document.getElementById('loginUser').value.trim(), p = document.getElementById('loginPass').value;
+        const users = JSON.parse(localStorage.getItem('qbh_users') || '[]');
+        const found = users.find(x => x.user.toLowerCase() === u.toLowerCase() && x.pass === p);
+        if (found) { currentUser = found; localStorage.setItem('qbh_current', JSON.stringify(found)); initApplication(); } else alert("Sai thông tin");
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const u = document.getElementById('regUser').value.trim(), p = document.getElementById('regPass').value;
+        if(u.length < 4) return alert("Tên quá ngắn");
+        let users = JSON.parse(localStorage.getItem('qbh_users') || '[]');
+        if (users.find(x => x.user.toLowerCase() === u.toLowerCase())) return alert("Tồn tại");
+        users.push({ user: u, pass: p, avatar: null, bio: "Chào mọi người!" });
+        localStorage.setItem('qbh_users', JSON.stringify(users));
+        alert("Thành công"); toggleAuth();
+    });
+
+    function logout() { if(confirm("Đăng xuất?")) { localStorage.removeItem('qbh_current'); location.reload(); } }
+    function initApplication() {
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'block';
+        updateMarketUserUI();
+        loadMarketFeed();
+        loadAdminList();
+    }
+    function updateMarketUserUI() {
+        const el = document.getElementById('marketCurrentUserAvatar');
+        el.innerHTML = currentUser.avatar ? `<img src="${currentUser.avatar}">` : '<i class="fas fa-user" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;"></i>';
+    }
+
+    // ---------------------------------------------------------
+    // NAVIGATION
+    // ---------------------------------------------------------
+    function switchView(v, el) {
+        document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+        document.getElementById(`view-${v}`).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+        if(el) el.classList.add('active');
+        document.getElementById('mainHeader').style.display = 'flex';
+        document.getElementById('bottomNav').classList.remove('hide-nav');
+        document.getElementById('headerTitle').innerHTML = '<i class="fas fa-shield-halved"></i> QUY BAO HIỂM CS';
+        if(v !== 'market') resetCreatePostForm();
+        if(v === 'market') loadMarketFeed();
+    }
+
+    // ---------------------------------------------------------
+    // MARKET POSTING
+    // ---------------------------------------------------------
+    function toggleCreateForm() { isCreateFormOpen = !isCreateFormOpen; document.getElementById('createDetailsForm').classList.toggle('active', isCreateFormOpen); }
+    function handleImageUpload(input) {
+        if (input.files[0]) {
+            const r = new FileReader();
+            r.onload = e => {
+                tempPostImage = e.target.result;
+                document.getElementById('previewImg').src = tempPostImage;
+                document.getElementById('previewImg').style.display = 'block';
+                document.getElementById('uploadPlaceholder').style.display = 'none';
+                if(!isCreateFormOpen) toggleCreateForm();
+            };
+            r.readAsDataURL(input.files[0]);
+        }
+    }
+    function resetCreatePostForm() {
+        document.getElementById('postDescInput').value = ''; document.getElementById('postTitleInput').value = '';
+        document.getElementById('postPriceInput').value = ''; document.getElementById('postImageInput').value = '';
+        document.getElementById('previewImg').style.display = 'none'; document.getElementById('uploadPlaceholder').style.display = 'block';
+        tempPostImage = null; if(isCreateFormOpen) toggleCreateForm();
+    }
+    function publishPost() {
+        const t = document.getElementById('postTitleInput').value.trim(), p = document.getElementById('postPriceInput').value.trim(), d = document.getElementById('postDescInput').value.trim();
+        if(!t && !d) return alert("Nhập nội dung");
+        if(tempPostImage && !currentUser.avatar) {
+            let users = JSON.parse(localStorage.getItem('qbh_users') || '[]');
+            let u = users.find(x => x.user === currentUser.user);
+            if(u) { u.avatar = tempPostImage; localStorage.setItem('qbh_users', JSON.stringify(users)); currentUser.avatar = tempPostImage; updateMarketUserUI(); }
+        }
+        let posts = JSON.parse(localStorage.getItem('qbh_market') || '[]');
+        posts.unshift({ id: Date.now().toString(), seller: currentUser.user, sellerAvatar: currentUser.avatar, title: t, price: p, desc: d, img: tempPostImage, createdAt: Date.now(), likes: [], comments: [] });
+        localStorage.setItem('qbh_market', JSON.stringify(posts));
+        resetCreatePostForm(); loadMarketFeed(); showToast("Đăng thành công!");
+    }
+
+    // ---------------------------------------------------------
+    // FEED & INTERACTIONS
+    // ---------------------------------------------------------
+    function loadMarketFeed() {
+        const posts = JSON.parse(localStorage.getItem('qbh_market') || '[]');
+        const c = document.getElementById('marketFeedList');
+        c.innerHTML = posts.length === 0 ? '<div class="empty-state"><i class="fas fa-store-slash"></i><h5>Chưa có bài đăng</h5></div>' : posts.map(p => renderPostHTML(p)).join('');
+    }
+
+    function renderPostHTML(p) {
+        const isLiked = p.likes.includes(currentUser.user);
+        let cmtHTML = '';
+        if(p.comments.length > 2) cmtHTML += `<div class="view-all-comments" onclick="openAllComments('${p.id}')">Xem tất cả ${p.comments.length} bình luận</div>`;
+        p.comments.slice(-2).forEach(c => cmtHTML += renderSingleCommentHTML(p.id, c));
+
+        return `<div class="post-card" id="post-${p.id}">
+            <div class="post-header">
+                <div class="post-avatar" onclick="openProfile('${p.seller}')">${p.sellerAvatar ? `<img src="${p.sellerAvatar}">` : '<i class="fas fa-user" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;background:#e5e7eb;border-radius:50%;"></i>'}</div>
+                <div class="post-user-info" onclick="openProfile('${p.seller}')"><div class="post-username">${p.seller}</div><div class="post-time">${timeAgo(p.createdAt)}</div></div>
+            </div>
+            <div class="post-content">
+                ${p.title ? `<div class="post-title">${escapeHTML(p.title)}</div>` : ''}
+                <div class="post-desc">${escapeHTML(p.desc)}</div>
+                ${p.price ? `<div class="post-price-tag">${escapeHTML(p.price)}</div>` : ''}
+            </div>
+            ${p.img ? `<div class="post-image-container" onclick="openImageModal('${p.img}')"><img src="${p.img}" loading="lazy"></div>` : ''}
+            <div class="post-stats-row"><span>${p.likes.length} lượt thích</span><span>${p.comments.length} bình luận</span></div>
+            <div class="post-interactions">
+                <button class="interaction-btn like-btn ${isLiked ? 'active' : ''}" onclick="toggleLike('${p.id}')"><i class="${isLiked ? 'fas' : 'far'} fa-heart"></i> Thích</button>
+                <button class="interaction-btn" onclick="focusCommentInput('${p.id}')"><i class="far fa-comment"></i> Bình luận</button>
+            </div>
+            <div class="comment-section" id="comments-${p.id}">
+                ${cmtHTML}
+                <div class="comment-input-row">
+                    <div class="comment-avatar">${currentUser.avatar ? `<img src="${currentUser.avatar}">` : '<i class="fas fa-user" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:14px;"></i>'}</div>
+                    <input type="text" placeholder="Viết bình luận..." id="input-${p.id}" onkeypress="if(event.key==='Enter')submitComment('${p.id}')">
+                    <button class="comment-send-btn" onclick="submitComment('${p.id}')"><i class="fas fa-paper-plane" style="font-size: 14px;"></i></button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function renderSingleCommentHTML(pid, c) {
+        return `<div class="comment-item">
+            <div class="comment-avatar">${c.avatar ? `<img src="${c.avatar}">` : '<i class="fas fa-user" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:12px;"></i>'}</div>
+            <div class="comment-body">
+                <span class="comment-author">${c.user}</span><span class="comment-text">${escapeHTML(c.text)}</span>
+                <div class="comment-meta"><span>${timeAgo(c.time)}</span>${c.user === currentUser.user ? `<button class="comment-action-small" style="color:var(--danger)" onclick="deleteComment('${pid}','${c.id}')">Xóa</button>` : ''}</div>
+            </div>
+        </div>`;
+    }
+
+    function toggleLike(pid) {
+        let posts = JSON.parse(localStorage.getItem('qbh_market') || '[]');
+        let idx = posts.findIndex(p => p.id === pid); if(idx === -1) return;
+        const lIdx = posts[idx].likes.indexOf(currentUser.user);
+        lIdx === -1 ? posts[idx].likes.push(currentUser.user) : posts[idx].likes.splice(lIdx, 1);
+        localStorage.setItem('qbh_market', JSON.stringify(posts));
+        const el = document.getElementById(`post-${pid}`);
+        const btn = el.querySelector('.like-btn'), icon = btn.querySelector('i');
+        btn.classList.toggle('active'); icon.classList.toggle('fas'); icon.classList.toggle('far');
+        el.querySelector('.post-stats-row span:first-child').innerText = `${posts[idx].likes.length} lượt thích`;
+    }
+
+    function focusCommentInput(pid) { document.getElementById(`input-${pid}`).focus(); }
+    
+    function submitComment(pid) {
+        const inp = document.getElementById(`input-${pid}`), txt = inp.value.trim(); if(!txt) return;
+        let posts = JSON.parse(localStorage.getItem('qbh_market') || '[]');
+        let idx = posts.findIndex(p => p.id === pid); if(idx === -1) return;
+        posts[idx].comments.push({ id: Date.now().toString(), user: currentUser.user, avatar: currentUser.avatar, text: txt, time: Date.now() });
+        localStorage.setItem('qbh_market', JSON.stringify(posts));
+        const sec = document.getElementById(`comments-${pid}`);
+        const row = sec.querySelector('.comment-input-row').outerHTML;
+        if(sec.querySelector('.view-all-comments')) sec.querySelector('.view-all-comments').remove();
+        let temp = document.createElement('div'); temp.innerHTML = renderSingleCommentHTML(pid, posts[idx].comments[posts[idx].comments.length-1]);
+        sec.querySelector('.comment-input-row')?.before(temp.firstElementChild) || sec.insertAdjacentHTML('beforeend', row);
+        sec.querySelector('.post-stats-row span:last-child').innerText = `${posts[idx].comments.length} bình luận`;
+        inp.value = '';
+    }
+
+    function deleteComment(pid, cid) {
+        if(!confirm("Xóa?")) return;
+        let posts = JSON.parse(localStorage.getItem('qbh_market') || '[]');
+        let idx = posts.findIndex(p => p.id === pid); if(idx === -1) return;
+        posts[idx].comments = posts[idx].comments.filter(c => c.id !== cid);
+        localStorage.setItem('qbh_market', JSON.stringify(posts));
+        loadMarketFeed(); // Simple refresh for delete
+    }
+
+    function openAllComments(pid) {
+        let posts = JSON.parse(localStorage.getItem('qbh_market') || '[]');
+        let post = posts.find(p => p.id === pid); if(!post) return;
+        let m = document.createElement('div'); m.className = 'modal-overlay active'; m.style.cssText = 'flex-direction:column;background:white;padding:20px;border-radius:20px 20px 0 0;height:80%;align-items:stretch;';
+        m.onclick = e => { if(e.target === m) m.remove(); };
+        m.innerHTML = `<div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:15px;margin-bottom:20px;"><h5 style="margin:0;">Bình luận (${post.comments.length})</h5><button style="background:none;border:none;font-size:20px;cursor:pointer;" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button></div><div style="flex-grow:1;overflow-y:auto;">${post.comments.map(c => renderSingleCommentHTML(pid, c)).join('')}</div>`;
+        document.body.appendChild(m);
+    }
+
+    // ---------------------------------------------------------
+    // PROFILE
+    // ---------------------------------------------------------
+    function openProfile(u) {
+        viewingUser = u;
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-profile').classList.add('active');
+        document.getElementById('mainHeader').style.display = 'none';
+        document.getElementById('bottomNav').classList.add('hide-nav');
+        
+        const users = JSON.parse(localStorage.getItem('qbh_users') || '[]');
+        const data = users.find(x => x.user === u) || {user: u, avatar: null, bio: ""};
+        
+        document.getElementById('profileAvatarLg').innerHTML = data.avatar ? `<img src="${data.avatar}">` : '<i class="fas fa-user" style="font-size:40px;color:#ccc;margin-top:40px;"></i>';
+        document.getElementById('profileNameLg').innerText = data.user;
+        document.getElementById('profileBioLg').innerText = data.bio || "Chưa có tiểu sử";
+        
+        document.getElementById('profileSettingsBtn').style.display = u === currentUser.user ? 'flex' : 'none';
+        document.getElementById('followBtn').style.display = u === currentUser.user ? 'none' : 'block';
+        if(u !== currentUser.user) updateFollowButtonUI(u);
+
+        const posts = JSON.parse(localStorage.getItem('qbh_market') || '[]');
+        document.getElementById('pPostCount').innerText = posts.filter(p => p.seller === u).length;
+        const follows = JSON.parse(localStorage.getItem('qbh_follows') || '{}');
+        document.getElementById('pFollowerCount').innerText = Object.values(follows).flat().filter(x => x === u).length;
+        document.getElementById('pFollowingCount').innerText = (follows[currentUser.user] || []).length;
+        
+        switchProfileTab('posts', u);
+        window.scrollTo(0,0);
+    }
+
+    function goBackFromProfile() { switchView('market', document.querySelectorAll('.nav-item')[1]); }
+    
+    function updateFollowButtonUI(target) {
+        const btn = document.getElementById('followBtn');
+        const isFollowing = (JSON.parse(localStorage.getItem('qbh_follows') || '{}')[currentUser.user] || []).includes(target);
+        btn.innerText = isFollowing ? 'Đang theo dõi' : 'Theo dõi';
+        btn.classList.toggle('following', isFollowing);
+    }
+
+    function toggleFollowUser() {
+        if(!viewingUser || viewingUser === currentUser.user) return;
+        let f = JSON.parse(localStorage.getItem('qbh_follows') || '{}');
+        let my = f[currentUser.user] || [];
+        my.includes(viewingUser) ? (f[currentUser.user] = my.filter(x=>x!==viewingUser)) : my.push(viewingUser);
+        f[currentUser.user] = my;
+        localStorage.setItem('qbh_follows', JSON.stringify(f));
+        document.getElementById('pFollowerCount').innerText = Object.values(f).flat().filter(x => x === viewingUser).length;
+        document.getElementById('pFollowingCount').innerText = my.length;
+        updateFollowButtonUI(viewingUser);
+    }
+
+    function switchProfileTab(tab, u) {
+        const user = u || viewingUser;
+        document.querySelectorAll('.p-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.p-tab-content').forEach(c => c.classList.remove('active'));
+        if(event && event.currentTarget) event.currentTarget.classList.add('active'); else document.querySelector('.p-tab').classList.add('active');
+        document.getElementById(`tab-${tab}`).classList.add('active');
+        
+        const posts = JSON.parse(localStorage.getItem('qbh_market') || '[]');
+        const follows = JSON.parse(localStorage.getItem('qbh_follows') || '{}');
+        
+        if(tab === 'posts') document.getElementById('tab-posts').innerHTML = posts.filter(p=>p.seller===user).length ? posts.filter(p=>p.seller===user).map(p=>renderPostHTML(p)).join('') : '<div class="empty-state"><p>Chưa có bài viết.</p></div>';
+        else if(tab === 'liked') document.getElementById('tab-liked').innerHTML = posts.filter(p=>p.likes.includes(user)).length ? posts.filter(p=>p.likes.includes(user)).map(p=>renderPostHTML(p)).join('') : '<div class="empty-state"><p>Chưa thích bài nào.</p></div>';
+        else if(tab === 'followers') renderUserList('tab-followers', Object.keys(follows).filter(k => follows[k].includes(user)), 'Chưa có người theo dõi');
+        else if(tab === 'following') renderUserList('tab-following', follows[user] || [], 'Chưa theo dõi ai');
+    }
+
+    function renderUserList(id, list, msg) {
+        const users = JSON.parse(localStorage.getItem('qbh_users') || '[]');
+        document.getElementById(id).innerHTML = list.length ? list.map(u => {
+            const d = users.find(x=>x.user===u) || {};
+            return `<div class="admin-item" style="cursor:pointer;" onclick="openProfile('${u}')"><div class="admin-avatar">${d.avatar ? `<img src="${d.avatar}">` : '<i class="fas fa-user" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;background:#e5e7eb;border-radius:50%;"></i>'}</div><div class="admin-name">${u}</div></div>`;
+        }).join('') : `<div class="empty-state"><p>${msg}</p></div>`;
+    }
+
+    function openEditProfile() {
+        const b = prompt("Nhập tiểu sử mới:", currentUser.bio || "");
+        if(b === null) return;
+        let users = JSON.parse(localStorage.getItem('qbh_users') || '[]');
+        let u = users.find(x => x.user === currentUser.user);
+        if(u) { u.bio = b; localStorage.setItem('qbh_users', JSON.stringify(users)); currentUser.bio = b; document.getElementById('profileBioLg').innerText = b || "Chưa có tiểu sử"; showToast("Cập nhật thành công"); }
+    }
+
+    // ---------------------------------------------------------
+    // ADMIN SYSTEM (ĐỌC LẬP TỰ ĐỘNG TỪ THƯ MỤC DATA)
+    // ---------------------------------------------------------
+    function handleAdminSyncClick() {
+        // Bảo vệ: Chỉ cho phép người biết mã quản trị mới được thao tác
+        const pwd = prompt("NHẬP MÃ QUẢN TRỊ ĐỂ CHỐN THƯ MỤC DATA (MẶC KHẮU CẤP NHẤP):");
+        if (pwd !== "admin@qc") {
+            document.getElementById('syncStatus').innerText = "Sai mã quản trị!";
+            document.getElementById('syncStatus').style.color = "var(--danger)";
+            return;
+        }
+        syncAdminFolder();
+    }
+
+    async function syncAdminFolder() {
+        const statusEl = document.getElementById('syncStatus');
+        statusEl.innerText = "Đang mở thư mục...";
+        statusEl.style.color = "var(--text-sub)";
+
+        try {
+            // Yêu cầu trình duyệt chọn thư mục (Chỉ hoạt động trên HTTPS hoặc Localhost)
+            const dirHandle = await window.showDirectoryPicker({ mode: 'read' });
+            statusEl.innerText = "Đang đọc cấu trúc thư mục...";
+            
+            const fileMap = {};
+            
+            // Lặp qua tất cả các tệp trong thư mục đã chọn
+            for await (const entry of dirHandle.values()) {
+                if (entry.kind === 'file') {
+                    const fileName = entry.name;
+                    const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+                    const ext = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+                    
+                    if (!fileMap[baseName]) {
+                        fileMap[baseName] = {};
+                    }
+                    fileMap[baseName][ext] = entry;
+                }
+            }
+
+            const newAdmins = [];
+            let processedCount = 0;
+
+            // Xử lý các cặp file có cùng tên
+            for (const [baseName, files] of Object.entries(fileMap)) {
+                // Bắt buộc phải có file .txt
+                if (!files.txt) continue;
+
+                statusEl.innerText = `Đang xử lý: ${baseName}.txt...`;
+
+                try {
+                    // Đọc file text
+                    const txtFile = await files.txt.getFile();
+                    const txtContent = await txtFile.text();
+                    const lines = txtContent.split('\n').map(l => l.trim()).filter(l => l);
+
+                    // Tìm file ảnh tương ứng (ưu tiên jpg, sau đó png, jpeg)
+                    let imgBase64 = null;
+                    const imgFile = files.jpg || files.jpeg || files.png;
+                    
+                    if (imgFile) {
+                        statusEl.innerText = `Đang nạp ảnh: ${baseName}.${imgFile.name.split('.').pop()}...`;
+                        const imgFileData = await imgFile.getFile();
+                        imgBase64 = await fileToBase64(imgFileData);
+                    }
+
+                    // Tạo nút liên hệ dựa vào link
+                    let linksHTML = '';
+                    const links = lines.slice(2, 4); // Lấy tối đa 2 link
+                    links.forEach(link => {
+                        const l = link.toLowerCase();
+                        if (l.includes('facebook.com') || l.includes('fb.com')) {
+                            linksHTML += `<a href="${link}" target="_blank" class="admin-link-btn" style="background:#1877F2"><i class="fab fa-facebook-f"></i> Check Mess</a>`;
+                        } else if (l.includes('t.me') || l.includes('telegram')) {
+                            linksHTML += `<a href="${link}" target="_blank" class="admin-link-btn" style="background:#0088cc"><i class="fab fa-telegram-plane"></i> Check Tele</a>`;
+                        } else if (l.includes('zalo')) {
+                            linksHTML += `<a href="${link}" target="_blank" class="admin-link-btn" style="background:#0068ff"><i class="fas fa-comment"></i> Check Zalo</a>`;
+                        }
+                    });
+
+                    newAdmins.push({
+                        name: lines[0] || baseName,
+                        amount: lines[1] || "0đ",
+                        linksHTML: linksHTML,
+                        img: imgBase64
+                    });
+                    processedCount++;
+
+                } catch (err) {
+                    console.error(`Lỗi đọc file ${baseName}:`, err);
+                }
+            }
+
+            // Lưu vào LocalStorage (Mô phỏng Database Server)
+            if (processedCount > 0) {
+                localStorage.setItem('qbh_admins', JSON.stringify(newAdmins));
+                statusEl.innerText = `Thành công! Đã đồng bộ ${processedCount} Admin.`;
+                statusEl.style.color = "var(--success)";
+                loadAdminList(); // Render lại giao diện
+                showToast(`Đã tải lên ${processedCount} Admin mới!`);
+            } else {
+                statusEl.innerText = "Không tìm thấy cặp file .txt và ảnh trùng tên.";
+                statusEl.style.color = "var(--warning)";
+            }
+
+        } catch (err) {
+            console.error("Lỗi đồng bộ:", err);
+            if (err.name === 'NotAllowedError') {
+                statusEl.innerText = "Trình duyệt chặn quyền truy cập thư mục!";
+                statusEl.style.color = "var(--danger)";
+            } else {
+                statusEl.innerText = "Lỗi: " + err.message;
+                statusEl.style.color = "var(--danger)";
+            }
+        }
+    }
+
+    // Helper chuyển File thành Base64
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    function loadAdminList() {
+        // KHÔNG CÓ DATA GIẢ LẬP. Chỉ đọc từ LocalStorage do Server (CronJob/Folder Sync) đẩy vào.
+        const admins = JSON.parse(localStorage.getItem('qbh_admins') || '[]');
+        const container = document.getElementById('adminListContainer');
+        
+        if (admins.length === 0) {
+            container.innerHTML = `<div class="empty-state"><i class="fas fa-users-slash"></i><h5>Danh sách trống</h5><p>Chưa có dữ liệu Admin.</p></div>`;
+            return;
+        }
+
+        container.innerHTML = admins.map((admin, index) => `
+            <div class="admin-item" data-name="${admin.name.toLowerCase()}">
+                <div class="admin-rank">${index + 1}</div>
+                <div class="admin-avatar">
+                    ${admin.img ? `<img src="${admin.img}">` : '<i class="fas fa-user-secret" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;background:#e5e7eb;border-radius:50%;"></i>'}
+                </div>
+                <div class="admin-info">
+                    <div class="admin-name">${admin.name}</div>
+                    <div class="admin-amount">Đặt cọc: ${admin.amount}</div>
+                    <div class="admin-links">${admin.linksHTML}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function filterAdmins() {
+        const q = document.getElementById('searchAdmin').value.toLowerCase();
+        document.querySelectorAll('.admin-item').forEach(item => {
+            item.style.display = (item.getAttribute('data-name') || '').includes(q) ? 'flex' : 'none';
+        });
+    }
+
+    // ---------------------------------------------------------
+    // UTILITIES
+    // ---------------------------------------------------------
+    function timeAgo(ts) {
+        const s = Math.floor((Date.now() - ts) / 1000);
+        if(s < 60) return "Vừa xong";
+        const m = Math.floor(s / 60); if(m < 60) return `${m} phút trước`;
+        const h = Math.floor(m / 60); if(h < 24) return `${h} giờ trước`;
+        const d = Math.floor(h / 24); if(d < 7) return `${d} ngày trước`;
+        const dt = new Date(ts); return `${dt.getDate()}/${dt.getMonth()+1}/${dt.getFullYear()}`;
+    }
+    function escapeHTML(str) { if(!str) return ""; const d = document.createElement('div'); d.appendChild(document.createTextNode(str)); return d.innerHTML; }
+    function openImageModal(src) { if(!src) return; document.getElementById('modalImage').src = src; document.getElementById('imageModal').classList.add('active'); document.body.style.overflow = 'hidden'; }
+    function closeImageModal() { document.getElementById('imageModal').classList.remove('active'); document.body.style.overflow = ''; }
+    function showToast(msg) { const c = document.getElementById('toastContainer'); const t = document.createElement('div'); t.className = 'toast-msg'; t.innerText = msg; c.appendChild(t); setTimeout(() => { t.style.opacity='0'; t.style.transform='translateY(20px)'; t.style.transition='0.3s'; setTimeout(()=>t.remove(), 300); }, 2500); }
+
+    // ---------------------------------------------------------
+    // INIT
+    // ---------------------------------------------------------
+    window.onload = function() {
+        const saved = localStorage.getItem('qbh_current');
+        if (saved) { currentUser = JSON.parse(saved); initApplication(); }
+        else document.getElementById('loginUser').focus();
+    };
+</script>
+</body>
+</html>
